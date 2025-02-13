@@ -6,7 +6,7 @@ from gilded_rose import Item, GildedRose
 
 class GildedRoseTest(unittest.TestCase):
     # example of test that checks for logical errors
-    ###def test_sulfuras_should_not_decrease_quality(self):
+    def test_sulfuras_should_not_decrease_quality(self):
         items = [Item("Sulfuras", 5, 80)]
         gilded_rose = GildedRose(items)
         gilded_rose.update_quality()
@@ -22,77 +22,44 @@ class GildedRoseTest(unittest.TestCase):
         all_items = gilded_rose.get_items()
         self.assertEquals(["Sulfuras"], all_items)
 
-    def test_quality_degrades_twice_as_fast_after_sell_by_date(self):
-        """Test that quality degrades twice as fast after the sell by date has passed"""
-        # Arrange
-        items = [Item("standard item", 0, 10)]  # SellIn of 0 means sell-by date has passed
+    def test_aged_brie_increases_in_quality(self):
+        items = [Item("Aged Brie", 0, 20)]  # Past sell-by date
         gilded_rose = GildedRose(items)
-        
-        # Act
         gilded_rose.update_quality()
-        
-        # Assert
-        # Quality should decrease by 2 since sell-by date has passed
-        self.assertEqual(8, items[0].quality, 
-            "Quality should degrade twice as fast after sell-by date")
-    
+        brie_item = items[0]
+        # Expecting Aged Brie to increase quality twice as fast after sell-by date
+        self.assertEqual(23, brie_item.quality, 
+                        "Aged Brie should increase in quality twice as fast after sell-by date")
+
+    # Logical Error Test 2: Testing Backstage Pass quality rules
+    def test_backstage_pass_quality_increases(self):
+        items = [Item("Backstage passes", 6, 20)]
+        gilded_rose = GildedRose(items)
+        gilded_rose.update_quality()
+        pass_item = items[0]
+        self.assertEqual(23, pass_item.quality, 
+                        "Backstage pass should increase by 3 when SellIn is 5 days or less")
+
     def test_conjured_items_degrade_twice_as_fast(self):
-        """Test that conjured items degrade in quality twice as fast as normal items"""
-        # Arrange
-        items = [
-            Item("Conjured Mana Cake", 3, 10),  # Conjured item
-            Item("standard item", 3, 10)         # Normal item for comparison
-        ]
+        items = [Item("Conjured", 10, 20)]
         gilded_rose = GildedRose(items)
-        
-        # Act
         gilded_rose.update_quality()
         
-        # Assert
-        self.assertEqual(8, items[0].quality, 
-            "Conjured items should degrade twice as fast")
-        self.assertEqual(9, items[1].quality, 
-            "Normal items should degrade by 1")
-    
-    def test_backstage_passes_quality_increases(self):
-        """Test that backstage passes increase in quality as sell-in approaches"""
-        # Arrange
+        # A conjured item should lose 2 quality per day
+        self.assertEqual(16, items[0].quality,  # Expecting double degradation
+                        "Conjured items should degrade by 2 quality per day")
+
+    # Syntax Error Test: Testing non-existent method
+    def test_get_items_by_quality_threshold(self):
         items = [
-            Item("Backstage passes to a TAFKAL80ETC concert", 11, 20),  # Regular increase
-            Item("Backstage passes to a TAFKAL80ETC concert", 10, 20),  # Should increase by 2
-            Item("Backstage passes to a TAFKAL80ETC concert", 5, 20),   # Should increase by 3
-            Item("Backstage passes to a TAFKAL80ETC concert", 0, 20)    # Should drop to 0
+            Item("Sulfuras", 5, 80),
+            Item("Aged Brie", 10, 20),
+            Item("Normal Item", 15, 30)
         ]
         gilded_rose = GildedRose(items)
-        
-        # Act
-        gilded_rose.update_quality()
-        
-        # Assert
-        self.assertEqual(21, items[0].quality, "Quality should increase by 1 when more than 10 days")
-        self.assertEqual(22, items[1].quality, "Quality should increase by 2 when 10 days or less")
-        self.assertEqual(23, items[2].quality, "Quality should increase by 3 when 5 days or less")
-        self.assertEqual(0, items[3].quality, "Quality should drop to 0 after concert")
-    
-    def test_get_item_categories(self):
-        """Test getting a list of all unique item categories in the store (syntax error test)"""
-        # Arrange
-        items = [
-            Item("Aged Brie", 2, 0),
-            Item("Backstage passes to a TAFKAL80ETC concert", 15, 20),
-            Item("Sulfuras, Hand of Ragnaros", 0, 80),
-            Item("Conjured Mana Cake", 3, 6)
-        ]
-        gilded_rose = GildedRose(items)
-        
-        # Act & Assert
-        # This should fail because get_item_categories() method doesn't exist
-        categories = gilded_rose.get_item_categories()
-        self.assertEqual(
-            ["Aged Brie", "Backstage passes", "Sulfuras", "Conjured"], 
-            categories,
-            "Should return list of unique item categories"
-        )
+        high_quality_items = gilded_rose.get_items_by_quality_threshold(50)
+        self.assertEqual(1, len(high_quality_items),
+                        "Should return items with quality above the threshold")
 
 
 if __name__ == '__main__':
